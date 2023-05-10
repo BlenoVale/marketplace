@@ -8,7 +8,7 @@ export const Auth = {
         if (req.query.token) {
             token = req.query.token as string;
         } else if (req.body.token) {
-            token = req.query.token as string;
+            token = req.body.token as string;
         } else {
             res.json({ notallowed: true })
             return;
@@ -25,7 +25,7 @@ export const Auth = {
             res.json({ notallowed: true })
             return;
         }
-
+        
         return next();
     }
 }

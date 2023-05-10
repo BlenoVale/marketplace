@@ -8,13 +8,38 @@ import State from "../models/state";
 
 const AuthController = {
     signin: async (req: Request, res: Response) => {
+        const erros = validationResult(req);
+        if (!erros.isEmpty()) {
+            return res.json({ error: erros.mapped() });
+        }
 
+        const data = matchedData(req);
+
+        // validando o email
+        const user = await User.findOne({ email: data.email });
+        if (!user) {
+            return res.json({ Error: 'E-mail e/ou senha errados!' });
+        }
+
+        // validando a senha
+        const match = await bcrypt.compare(data.password, user.passwordHash as string);
+        if (!match) {
+            return res.json({ Error: 'E-mail e/ou senha errados!' });
+        }
+
+        const payload = (Date.now() + Math.random()).toString();
+        const token = await bcrypt.hash(payload, 10);
+
+        user.token = token;
+        await user.save();
+
+        return res.json({ token, email: data.email });
     },
+
     signup: async (req: Request, res: Response) => {
         const erros = validationResult(req);
         if (!erros.isEmpty()) {
-            res.json({ error: erros.mapped() });
-            return;
+            return res.json({ error: erros.mapped() });
         }
 
         const data = matchedData(req);
@@ -22,7 +47,7 @@ const AuthController = {
         //Verificando se e-mail já existe 
         const user = await User.findOne({ email: data.email });
         if (user) {
-            res.json({
+            return res.json({
                 error: { email: { msg: 'Email já cadastrado' } }
             });
         }
@@ -31,12 +56,12 @@ const AuthController = {
         if (mongoose.Types.ObjectId.isValid(data.state)) {
             const stateItem = await State.findById(data.state);
             if (!stateItem) {
-                res.json({
+                return res.json({
                     error: { state: { msg: 'Estado não existe' } }
                 });
             }
         } else {
-            res.json({
+            return res.json({
                 error: { state: { msg: 'Código de Estado inválido' } }
             });
         }
@@ -58,6 +83,7 @@ const AuthController = {
 
         return res.json({ token });
     },
+
 };
 
 export default AuthController;
