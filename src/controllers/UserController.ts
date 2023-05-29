@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 import State from '../models/state';
 import User from "../models/user";
 import Category from '../models/category';
-import Ads from '../models/ad';
+import Ad from '../models/ad';
 
 import { StateType } from "../types/StateType";
 import { UserType } from "../types/UserType";
@@ -23,7 +23,7 @@ const UserController = {
         let token = req.query.token;
         const user = await User.findOne({ token }) as UserType;
         const state = await State.findById(user.state) as StateType;
-        const ads = await Ads.find({ idUser: user._id.toString() }) as AdType[];
+        const ads = await Ad.find({ idUser: user._id.toString() }) as AdType[];
 
         let adList: Object[] = [];
         for (let i in ads) {

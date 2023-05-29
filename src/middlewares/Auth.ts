@@ -3,6 +3,7 @@ import User from '../models/user';
 
 export const Auth = {
     private: async (req: Request, res: Response, next: NextFunction) => {
+        console.log(req.body);
         
         let token = '';
         if (req.query.token) {

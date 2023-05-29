@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 mongoose.Promise = global.Promise;
 
 interface IAds {
-    idUser: String;
+    idUser: any;
     state: String;
     category: String;
     images: [Object];
@@ -12,11 +12,11 @@ interface IAds {
     priceNegotiable: Boolean;
     description: String;
     views: Number;
-    status: String;
+    status: boolean;
 }
 
 const adsSchema = new mongoose.Schema<IAds>({
-    idUser: { type: String, required: true },
+    idUser: { type: Types.ObjectId, required: true },
     state: { type: String, required: true },
     category: { type: String, required: true },
     images: { type: [Object], required: true },
@@ -26,12 +26,12 @@ const adsSchema = new mongoose.Schema<IAds>({
     priceNegotiable: { type: Boolean, required: true },
     description: { type: String, required: true },
     views: { type: Number, required: true },
-    status: { type: String, required: true },
+    status: { type: Boolean, required: true },
 });
 
-const Ads = mongoose.model<IAds>('Ads', adsSchema);
+const Ad = mongoose.model<IAds>('Ads', adsSchema);
 
-export default Ads;
+export default Ad;
 
 /*
 const modelSchema = new mongoose.Schema({
