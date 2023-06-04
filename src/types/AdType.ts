@@ -11,6 +11,6 @@ export type AdType = {
     price: Number;
     priceNegotiable: Boolean;
     description: String;
-    views: Number;
+    views: number;
     status: String;
 }
