@@ -1,6 +1,5 @@
 import multer from 'multer';
 import mime from 'mime-types'
-import sharp from "sharp";
 
 //const uploadUrl = path.dirname('/public/media/');
 

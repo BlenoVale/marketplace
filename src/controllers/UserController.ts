@@ -23,28 +23,26 @@ const UserController = {
         let token = req.query.token;
         const user = await User.findOne({ token }) as UserType;
         const state = await State.findById(user.state) as StateType;
-        const ads = await Ad.find({ idUser: user._id.toString() }) as AdType[];
+        const ads = await Ad.find({ idUser: user._id }) as AdType[];
 
         let adList: Object[] = [];
         for (let i in ads) {
 
             const cat = await Category.findById(ads[i].category) as CategoryType;
-            adList.push({ ...ads[i], category: cat.slug });
+            //adList.push({ ...ads[i], category: cat.slug }); ou
 
-            /* ou
             adList.push({
                 id: ads[i]._id,
                 status: ads[i].status,
-                images: ads[i].images,
                 dateCreated: ads[i].dateCreated,
                 title: ads[i].tilte,
                 price: ads[i].price,
                 priceNegotiable: ads[i].priceNegotiable,
                 description: ads[i].description,
                 views: ads[i].views,
-                categorys: cat.slug
+                categorys: cat.slug,
+                images: ads[i].images,
             });
-            */
         }
 
         return res.json({
@@ -63,37 +61,37 @@ const UserController = {
 
         const data = matchedData(req);
 
-        let updates: any = {} ;
+        let updates: any = {};
 
-        if(data.name) {
+        if (data.name) {
             updates.name = data.name;
         }
 
-        if(data.email) {
-            const emailCheck = await User.findOne({email: data.email});
-            if(emailCheck) {
-                return res.json({error: 'E-mail já existente.'});
+        if (data.email) {
+            const emailCheck = await User.findOne({ email: data.email });
+            if (emailCheck) {
+                return res.json({ error: 'E-mail já existente.' });
             }
             updates.email = data.email;
         }
 
-        if(data.state) {
-            if(mongoose.Types.ObjectId.isValid(data.state)){
+        if (data.state) {
+            if (mongoose.Types.ObjectId.isValid(data.state)) {
                 const stateCheck = await State.findById(data.state);
-                if(!stateCheck){
-                    return res.json({error: 'Estado não existe.'});
+                if (!stateCheck) {
+                    return res.json({ error: 'Estado não existe.' });
                 }
                 updates.state = data.state;
             } else {
-                return res.json({error: 'código do Estado inválido.'});
+                return res.json({ error: 'código do Estado inválido.' });
             }
         }
 
-        if(data.password){
+        if (data.password) {
             updates.passwordHash = await bcrypt.hash(data.password, 10);
         }
 
-        await User.findOneAndUpdate({token: data.token}, {$set: updates});
+        await User.findOneAndUpdate({ token: data.token }, { $set: updates });
 
         return res.json({});
     },

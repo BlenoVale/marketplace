@@ -7,7 +7,7 @@ interface IAds {
     category: String;
     images: [Object];
     dateCreated: Date;
-    tilte: String;
+    title: String;
     price: Number;
     priceNegotiable: Boolean;
     description: String;
@@ -21,7 +21,7 @@ const adsSchema = new mongoose.Schema<IAds>({
     category: { type: String, required: true },
     images: { type: [Object], required: true },
     dateCreated: { type: Date, required: true },
-    tilte: { type: String, required: true },
+    title: { type: String, required: true },
     price: { type: Number, required: true },
     priceNegotiable: { type: Boolean, required: true },
     description: { type: String, required: true },

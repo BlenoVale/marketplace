@@ -3,28 +3,26 @@ import sharp from "sharp";
 
 import Category from "../models/category";
 import User from "../models/user";
+import State from "../models/state";
 
 import { CategoryType } from "../types/CategoryType";
 import Ad from "../models/ad";
 import { UserType } from "../types/UserType";
+import { AdType } from "../types/AdType";
+import { mongo } from "mongoose";
 
-/*
-const addImage = async (buffer: any) => {
-    let newName = `${uuid}.jpg`;
-    let tmpImg = await jimp.read(buffer);
-    tmpImg.cover(500, 500).quality(80).write(`./public/media/${newName}`);
-    return newName;
-}
-*/
+
 sharp.cache(false);
 const resizeImage = async (url: string) => {
     let buffer = await sharp(url)
         .resize({
             width: 500,
             height: 500,
-            fit: sharp.fit.inside,
+            fit: 'fill',
             withoutEnlargement: true,
-        }).toBuffer();
+        })
+        .extract({ width: 500, height: 500, left: 0, top: 0 })
+        .toBuffer();
 
     return sharp(buffer).toFile(url);
 }
@@ -55,6 +53,13 @@ const AdsController = {
             return res.json({ error: 'Título e/ou categoria não foram preenchidos.' });
         }
 
+        if (cat) {
+            const c = await Category.findOne({ slug: cat }).exec();
+            if (c) {
+                cat = c._id.toString();
+            }
+        }
+
         if (price) {
             price = price.replace('.', '').replace(',', '.').replace('R$ ', '');
             price = parseFloat(price);
@@ -67,7 +72,7 @@ const AdsController = {
         newAd.idUser = user._id;
         newAd.state = user.state;
         newAd.dateCreated = new Date();
-        newAd.tilte = title;
+        newAd.title = title;
         newAd.category = cat;
         newAd.price = price;
         newAd.priceNegotiable = (priceneg == 'true') ? true : false;
@@ -78,10 +83,12 @@ const AdsController = {
 
         for (let i in files) {
             resizeImage(files[i].path);
-            let url = files[i].path;
+            let url = `/media/${files[i].filename}`;
+
+            let def = i == '0' ? true : false
             newAd.images.push({
                 url,
-                default: false
+                default: def
             });
         }
 
@@ -90,7 +97,60 @@ const AdsController = {
     },
 
     getList: async (req: Request, res: Response) => {
+        let { sort = 'asc', offset = '0', limit = 8, q, cat, state } = req.query;
+        let filters = { status: true } as any;
+        let total = 0;
 
+        if (q) {
+            filters.title = { $regex: q, $options: 'i' };
+        }
+
+        if (cat) {
+            const c = await Category.findOne({ slug: cat }).exec();
+            if (c) {
+                filters.category = c._id.toString();
+            }
+        }
+
+        if (state) {
+            const s = await State.findOne({ name: state.toString().toUpperCase() }).exec();
+            if (s) {
+                filters.state = s._id.toString();
+            }
+        }
+
+        const adsTotal = await Ad.find(filters).exec();
+        total = adsTotal.length;
+
+        console.log(filters);
+        const adsData = await Ad.find(filters)
+            .sort({ dateCreated: (sort == 'desc' ? -1 : 1) })
+            .skip(parseInt(offset as string))
+            .limit(parseInt(limit as string))
+            .exec();
+
+        let ads = [] as Object[];
+
+        for (let i in adsData) {
+            let image = '';
+            let list: any = adsData[i].images;
+            let defIMG = list.find((e: { default: any }) => e.default);
+            if (defIMG) {
+                image = `${process.env.BASE}${defIMG.url}`;
+            } else {
+                image = `${process.env.BASE}/media/default.jpg`;
+            }
+
+            ads.push({
+                id: adsData[i]._id,
+                title: adsData[i].title,
+                price: adsData[i].price,
+                priceNegotiable: adsData[i].priceNegotiable,
+                image
+            });
+        }
+
+        res.json({ ads, total });
     },
     getItem: async (req: Request, res: Response) => {
 
