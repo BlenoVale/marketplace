@@ -21,7 +21,7 @@ const resizeImage = async (url: string) => {
             fit: 'fill',
             withoutEnlargement: true,
         })
-        .extract({ width: 500, height: 500, left: 0, top: 0 })
+        //.extract({ width: 500, height: 500, left: 0, top: 0 })
         .toBuffer();
 
     return sharp(buffer).toFile(url);
@@ -238,7 +238,7 @@ const AdsController = {
                 return res.json({ error: 'Anúncio não encontrado.' });
             }
 
-            const user = await User.findOne(token).exec() as UserType;
+            const user = await User.findOne({ token }).exec() as UserType;
             if (user._id.toString() != ad.idUser) {
                 return res.json({ error: 'Anúncio encontrado não é do usuário logado' });
             }
@@ -271,11 +271,21 @@ const AdsController = {
                 updates.category = category._id.toString();
             }
 
-            if (images) {
-                updates.images = images;
+            let files = req.files as any;
+            let editAd: any = await Ad.findById(id).exec();
+
+            for (let i in files) {
+                resizeImage(files[i].path);
+                let url = `/media/${files[i].filename}`;
+
+                let def = i == '0' ? true : false
+                editAd.images.push({
+                    url,
+                    default: def
+                });
             }
 
-            await Ad.findByIdAndUpdate(id, { $set: updates });
+            await Ad.findByIdAndUpdate(id, { $set: updates, images: editAd.images });
 
             //TODO: Novas imagens.
 
